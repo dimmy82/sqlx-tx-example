@@ -1,4 +1,4 @@
-use crate::usecase::update_value_by_key;
+use crate::use_case::update_value_by_key;
 use actix_web::{post, web, HttpResponse, Responder};
 use serde::Deserialize;
 
