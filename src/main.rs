@@ -1,3 +1,6 @@
+extern crate core;
+
+mod driver;
 mod rest;
 mod use_case;
 mod use_case_try;
@@ -34,6 +37,6 @@ pub async fn main() -> Result<()> {
 async fn create_pool() -> Result<PgPool> {
     Ok(PgPoolOptions::new()
         .max_connections(10)
-        .connect("postgres://ibex:ibex@localhost:30395/ip")
+        .connect("postgres://ibex:ibex@localhost:17018/paper")
         .await?)
 }
