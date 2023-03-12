@@ -1,3 +1,4 @@
+use crate::driver::{insert_log, insert_main, select_main, update_main, update_main_null};
 use crate::DB_POOL;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
@@ -45,37 +46,41 @@ pub struct Param {
     pub value: String,
 }
 
-pub async fn update_by_key(
+pub async fn update_main_and_create_log(
     param: Param, mut tx: Transaction<'_, Postgres>,
 ) -> Result<(u64, Transaction<'_, Postgres>)> {
-    let result = if param.value == "NULL" {
-        _update_null_by_key(param.key, &mut tx).await?
-    } else {
-        _update_value_by_key(param.key, param.value.clone(), &mut tx).await?
+    let value = select_main(param.key.clone(), &mut tx).await?;
+    let result = match value {
+        Some(v) => {
+            let result = if param.value.as_str() == "NULL" {
+                update_main_null(param.key.clone(), &mut tx).await?
+            } else {
+                update_main(param.key.clone(), param.value.clone(), &mut tx).await?
+            };
+            insert_log(
+                format!(
+                    "update id:[{:?}] value:[{:?} -> {:?}]",
+                    param.key, v, param.value
+                ),
+                &mut tx,
+            )
+            .await?;
+            result
+        }
+        None => {
+            let result = insert_main(param.key.clone(), param.value.clone(), &mut tx).await?;
+            insert_log(
+                format!("insert id:[{:?}] value:[{:?}]", param.key, param.value),
+                &mut tx,
+            )
+            .await?;
+            result
+        }
     };
-    if param.value == "panic" {
-        panic!("holy sh*t")
+
+    if param.value.as_str() == "panic" {
+        panic!("holy sh*t !!!")
     }
+
     Ok((result, tx))
-}
-
-async fn _update_value_by_key(
-    key: String, value: String, tx: &mut Transaction<'_, Postgres>,
-) -> Result<u64> {
-    let result =
-        sqlx::query("UPDATE paper.paper_formula SET formula = $2 WHERE main_group_id = $1")
-            .bind(key)
-            .bind(value.clone())
-            .execute(tx)
-            .await?;
-    Ok(result.rows_affected())
-}
-
-async fn _update_null_by_key(key: String, tx: &mut Transaction<'_, Postgres>) -> Result<u64> {
-    let result =
-        sqlx::query("UPDATE paper.paper_formula SET formula = NULL WHERE main_group_id = $1")
-            .bind(key)
-            .execute(tx)
-            .await?;
-    Ok(result.rows_affected())
 }

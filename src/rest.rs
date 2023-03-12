@@ -1,4 +1,4 @@
-use crate::use_case::{execute_use_case_in_tx, update_by_key, Param};
+use crate::use_case::{execute_use_case_in_tx, update_main_and_create_log, Param};
 use actix_web::{get, web, HttpResponse, Responder};
 use serde::Deserialize;
 
@@ -11,7 +11,7 @@ pub struct PostKeyValuePathParams {
 #[get("/key/{key}/value/{value}")]
 pub async fn post_key_value(path_params: web::Path<PostKeyValuePathParams>) -> impl Responder {
     match execute_use_case_in_tx(
-        update_by_key,
+        update_main_and_create_log,
         Param {
             key: path_params.key.clone(),
             value: path_params.value.clone(),
