@@ -49,28 +49,29 @@ pub struct Param {
 pub async fn update_main_and_create_log(
     param: Param, mut tx: Transaction<'_, Postgres>,
 ) -> Result<(u64, Transaction<'_, Postgres>)> {
-    let value = select_main(param.key.clone(), &mut tx).await?;
+    let value = select_main(param.key.as_str(), &mut tx).await?;
     let result = match value {
         Some(v) => {
             let result = if param.value.as_str() == "NULL" {
-                update_main_null(param.key.clone(), &mut tx).await?
+                update_main_null(param.key.as_str(), &mut tx).await?
             } else {
-                update_main(param.key.clone(), param.value.clone(), &mut tx).await?
+                update_main(param.key.as_str(), param.value.as_str(), &mut tx).await?
             };
             insert_log(
                 format!(
                     "update id:[{:?}] value:[{:?} -> {:?}]",
                     param.key, v, param.value
-                ),
+                )
+                .as_str(),
                 &mut tx,
             )
             .await?;
             result
         }
         None => {
-            let result = insert_main(param.key.clone(), param.value.clone(), &mut tx).await?;
+            let result = insert_main(param.key.as_str(), param.value.as_str(), &mut tx).await?;
             insert_log(
-                format!("insert id:[{:?}] value:[{:?}]", param.key, param.value),
+                format!("insert id:[{:?}] value:[{:?}]", param.key, param.value).as_str(),
                 &mut tx,
             )
             .await?;
