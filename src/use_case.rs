@@ -32,7 +32,7 @@ where
                     use_caseの途中でpanicされてもrollbackされることも検証済み
                     */
                     // tx.rollback().await?;
-                    log_kv::error!("UseCase NG ({:?})", error);
+                    log_kv::error!("UseCase NG [transaction will be ROLLBACK automatically] ({:?})", error);
                     Err(error)
                 }
             }
